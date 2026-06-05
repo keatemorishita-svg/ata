@@ -220,7 +220,9 @@ function Restore-ATA {
     if ($DryRun) {
         Write-Host "`n--- DRY RUN ---" -ForegroundColor Yellow
         Write-Host "Would restore $($s.windows.Count) windows:" -ForegroundColor Gray
-        $ordered = $s.windows | Sort-Object { $_.zOrder }
+        $ordered = $s.windows | Sort-Object {
+            if ($_.process.name -eq "clash-verge" -or $_.process.name -eq "Clash Verge") { -999 } else { $_.zOrder }
+        }
         foreach ($w in $ordered) {
             $tag = if ($w.restorable) { "" } else { " [NOT RESTORABLE]" }
             $t = $w.title
