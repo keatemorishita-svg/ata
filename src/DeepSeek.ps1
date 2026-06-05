@@ -29,20 +29,37 @@ function Invoke-DeepSeekAPI {
     }
     if ([string]::IsNullOrWhiteSpace($apiKey) -or $apiKey -match '\$\{') { return $null }
 
+    # 根据 provider 选择端点和模型
+    $provider = $ds.provider
+    if (-not $provider) { $provider = "deepseek" }
+
+    $endpoint = $ds.endpoint
+    $model = $ds.model
+    if ($provider -eq "openai") {
+        $endpoint = "https://api.openai.com/v1/chat/completions"
+        $model = "gpt-4o-mini"
+    } elseif ($provider -eq "deepseek") {
+        $endpoint = "https://api.deepseek.com/v1/chat/completions"
+        $model = "deepseek-chat"
+    }
+    # 允许 config 覆盖端点/模型
+    if ($ds.endpoint) { $endpoint = $ds.endpoint }
+    if ($ds.model) { $model = $ds.model }
+
     $body = @{
-        model = $ds.model
+        model = $model
         messages = @(@{role="system";content=$SystemPrompt}, @{role="user";content=$UserPrompt})
         max_tokens = $MaxTokens
         temperature = $Temperature
     } | ConvertTo-Json -Depth 4 -Compress
 
     try {
-        $response = Invoke-RestMethod -Uri $ds.endpoint -Method Post `
+        $response = Invoke-RestMethod -Uri $endpoint -Method Post `
             -Headers @{"Content-Type"="application/json"; "Authorization"="Bearer $apiKey"} `
             -Body $body -TimeoutSec 30
         return $response.choices[0].message.content
     } catch {
-        Write-Verbose "DeepSeek API: $_"
+        Write-Verbose "AI API ($provider): $_"
         return $null
     }
 }
