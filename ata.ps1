@@ -97,8 +97,7 @@ switch ($Command) {
         }
 
         # 同时显示最近日志
-        $logDir = Join-Path $([Environment]::GetFolderPath('ApplicationData')) "ATA\logs"
-        $logFile = Join-Path $logDir "ata.log"
+        $logFile = "$env:APPDATA\ATA\logs\ata.log"
         if ((Test-Path $logFile)) {
             Write-Host "`nRecent activity:" -ForegroundColor Cyan
             Get-Content $logFile -Tail 5 | ForEach-Object {
